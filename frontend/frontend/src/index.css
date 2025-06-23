@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Philosopher&family=Inter:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #0F0000;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: black;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Philosopher', 'Marcellus', serif;
+  color: #F4B3B3;
+}
