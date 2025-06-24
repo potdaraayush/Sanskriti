@@ -2,51 +2,70 @@ import React, { useState } from 'react';
 
 function SellerDashboard() {
   const [formData, setFormData] = useState({
+    username: '',
     title: '',
     description: '',
     category: '',
     price: '',
-    image_url: '',
+    imageFile: null,
+    sellerImageFile: null,
   });
 
   const [message, setMessage] = useState('');
-  const user = JSON.parse(localStorage.getItem('user')); // Get logged-in seller
+  const user = JSON.parse(localStorage.getItem('user')); // For seller_id
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
 
+    if (!user || !user.id) {
+      setMessage('❌ Seller not logged in.');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('seller_id', user.id);
+    data.append('username', formData.username);
+    data.append('title', formData.title);
+    data.append('description', formData.description);
+    data.append('category', formData.category);
+    data.append('price', formData.price);
+    data.append('image_file', formData.imageFile);
+    data.append('seller_image_file', formData.sellerImageFile);
+
     try {
       const res = await fetch('http://localhost:5000/add-art', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          seller_id: user.id, // Link art to logged-in seller
-        }),
+        body: data,
       });
 
-      const data = await res.json();
+      const result = await res.json();
 
       if (res.ok) {
         setMessage('✅ Artwork uploaded successfully!');
         setFormData({
+          username: '',
           title: '',
           description: '',
           category: '',
           price: '',
-          image_url: '',
+          imageFile: null,
+          sellerImageFile: null,
         });
       } else {
-        setMessage(`❌ ${data.error || 'Upload failed'}`);
+        setMessage(`❌ ${result.error || 'Upload failed'}`);
       }
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (err) {
+      console.error('Upload error:', err);
       setMessage('❌ Failed to upload artwork.');
     }
   };
@@ -55,13 +74,36 @@ function SellerDashboard() {
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-bold text-center mb-4 text-[#6E1313]">Upload Artwork</h2>
 
-      {message && (
-        <p className="text-center mb-4 text-sm text-red-600">{message}</p>
-      )}
+      {message && <p className="text-center mb-4 text-sm text-red-600">{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block font-semibold text-[#440000]">Title</label>
+          <label className="block font-semibold text-[#440000]">Your Username</label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+            placeholder="Enter your display name"
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold text-[#440000]">Your Profile Image (JPG/PNG)</label>
+          <input
+            type="file"
+            name="sellerImageFile"
+            accept="image/*"
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold text-[#440000]">Artwork Title</label>
           <input
             type="text"
             name="title"
@@ -80,6 +122,7 @@ function SellerDashboard() {
             value={formData.description}
             onChange={handleChange}
             rows={3}
+            required
             className="w-full p-2 border rounded"
             placeholder="Brief description of the artwork"
           />
@@ -111,14 +154,14 @@ function SellerDashboard() {
         </div>
 
         <div>
-          <label className="block font-semibold text-[#440000]">Image URL</label>
+          <label className="block font-semibold text-[#440000]">Artwork Image (JPG/PNG)</label>
           <input
-            type="url"
-            name="image_url"
-            value={formData.image_url}
+            type="file"
+            name="imageFile"
+            accept="image/*"
             onChange={handleChange}
+            required
             className="w-full p-2 border rounded"
-            placeholder="https://example.com/image.jpg"
           />
         </div>
 
