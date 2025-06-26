@@ -1,7 +1,6 @@
 import React from 'react';
-import Card from '../Card/Card.jsx';
+import CategoryCard from '../Card/CategoryCard';
 
-// Images
 import WoodenImage from '../../assets/Images/Products/Wooden/WoodenImage.png';
 import SareeImage from '../../assets/Images/Products/Sarees/SareeImage.png';
 import WallDecorImage from '../../assets/Images/Products/Wall Decor/WallDecorImage.png';
@@ -15,101 +14,101 @@ function Shop() {
   const user = JSON.parse(localStorage.getItem('user'));
   const isSeller = user?.role === 'seller';
 
-  const Categories = [
+  const categories = [
     {
       title: 'Wooden',
       imageUrl: WoodenImage,
       description: 'Explore our handcrafted wooden art pieces.',
-      path: '/app/category/wooden'
+      path: '/app/category/wooden',
     },
     {
       title: 'Sarees',
       imageUrl: SareeImage,
       description: 'Traditional Indian sarees with rich heritage.',
-      path: '/app/category/sarees'
+      path: '/app/category/sarees',
     },
     {
       title: 'Wall Decors',
       imageUrl: WallDecorImage,
       description: 'Elevate your space with our wall art.',
-      path: '/app/category/wall-decors'
+      path: '/app/category/wall-decors',
     },
     {
       title: 'Paintings',
       imageUrl: PaintingsImage,
       description: 'Beautiful paintings by local artisans.',
-      path: '/app/category/paintings'
+      path: '/app/category/paintings',
     },
     {
       title: 'Sculptures',
       imageUrl: SculpturesImage,
       description: 'Intricately designed sculptures for home & office.',
-      path: '/app/category/sculptures'
+      path: '/app/category/sculptures',
     },
     {
       title: 'Pottery',
       imageUrl: PotteryImage,
       description: 'Elegant pottery and ceramics collections.',
-      path: '/app/category/pottery'
+      path: '/app/category/pottery',
     },
     {
       title: 'Jewelry',
       imageUrl: JewelryImage,
       description: 'Ethnic and handmade traditional jewelry.',
-      path: '/app/category/jewelry'
+      path: '/app/category/jewelry',
     },
     {
       title: 'MetalWork',
       imageUrl: MetalWorkImage,
       description: 'Brass and metal crafts rooted in tradition.',
-      path: '/app/category/metalwork'
-    }
+      path: '/app/category/metalwork',
+    },
   ];
 
+  const scroll = (dir) => {
+    const container = document.getElementById('category-carousel');
+    container.scrollBy({ left: dir * 400, behavior: 'smooth' });
+  };
+
   return (
-    <>
-      <h1
-        style={{
-          color: '#F4B3B3',
-          textAlign: 'center',
-          fontSize: '30px',
-          fontFamily: 'Philosopher, sans-serif'
-        }}
-      >
-        Welcome to the Shop!
+    <div className="py-16 px-6 text-white">
+      <h1 className="text-4xl text-[#F4B3B3] text-center mb-12 font-philosopher tracking-wider drop-shadow-lg">
+        Explore Our Categories
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 justify-items-center p-4">
-        {/* Seller-specific manage link */}
-        {isSeller && (
-          <Card
-            id="manage" // dummy
-            seller_id={user.id}
-            title="Manage My Arts"
-            imageUrl="https://cdn-icons-png.flaticon.com/512/6815/6815042.png"
-            description="Edit or update the art you've uploaded"
-            price=""
-            link="/app/seller/edit-art"
-            disableCart // ✅ disable cart for this card
-          />
-        )}
+      <div className="relative flex items-center justify-center w-full">
+        <button
+          onClick={() => scroll(-1)}
+          className="absolute left-0 z-10 text-white px-4 py-3 rounded-full shadow hover:scale-110 transition"
+        >
+          ◀
+        </button>
 
-        {/* Render all categories */}
-        {Categories.map((category, index) => (
-          <Card
-            key={index}
-            id={`category-${index}`} // dummy id
-            seller_id=""
-            title={category.title}
-            imageUrl={category.imageUrl}
-            description={category.description}
-            price=""
-            link={category.path}
-            disableCart // ✅ disable cart button for category cards
-          />
-        ))}
+        <div
+          id="category-carousel"
+          className="flex overflow-x-auto gap-8 px-12 py-4 scroll-smooth hide-scrollbar"
+        >
+          {isSeller && (
+            <CategoryCard
+              title="Manage My Work"
+              imageUrl="https://cdn-icons-png.flaticon.com/512/6815/6815042.png"
+              description="Edit or update your uploaded arts"
+              path="/app/seller/edit-art"
+            />
+          )}
+          {categories.map((cat, i) => (
+            <CategoryCard key={i} {...cat} />
+          ))}
+        </div>
+
+        <button
+          onClick={() => scroll(1)}
+          className="absolute right-0 z-10 bg-[#440000] text-white px-4 py-3 rounded-full shadow hover:scale-110 transition"
+        >
+          ▶
+        </button>
       </div>
-    </>
+    </div>
   );
 }
 
