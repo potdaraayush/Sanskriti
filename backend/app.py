@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask import send_from_directory
 from flask_cors import CORS
 import psycopg2
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify
 from flask_mail import Mail, Message
 import random
@@ -14,6 +16,11 @@ import os
 app = Flask(__name__)
 CORS(app)
 load_dotenv()  # Load environment variables from .env
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 # Now use them
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
@@ -38,6 +45,13 @@ DB_NAME = 'postgres'
 DB_USER = 'postgres.djpbchdskdsfbjegvfor'
 DB_PASS = 'Pzw6dXVoSyMwV2KP'
 DB_PORT = 5432
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # --- REGISTER ---
 @app.route('/register', methods=['POST'])
@@ -129,33 +143,57 @@ def login():
 # --- ADD ART ---
 @app.route('/add-art', methods=['POST'])
 def add_art():
-    data = request.get_json()
-    required_fields = ['title', 'price', 'seller_id']
-    if not all(data.get(f) for f in required_fields):
-        return jsonify({"error": "Title, price, and seller ID are required"}), 400
-
     try:
+        seller_id = request.form.get('seller_id')
+        seller_name = request.form.get('username')
+        title = request.form.get('title')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        price = request.form.get('price')
+
+        image_file = request.files.get('image_file')
+        seller_image_file = request.files.get('seller_image_file')
+
+        # Validate required fields
+        if not all([seller_id, seller_name, title, price, image_file, seller_image_file]):
+            return jsonify({'error': 'All fields including image files are required'}), 400
+
+        if not allowed_file(image_file.filename) or not allowed_file(seller_image_file.filename):
+            return jsonify({'error': 'Only .jpg and .png files allowed'}), 400
+
+        # Save artwork image
+        image_filename = secure_filename(image_file.filename)
+        image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+        image_url = f"/uploads/{image_filename}"
+
+        # Save seller image
+        seller_image_filename = secure_filename(seller_image_file.filename)
+        seller_image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], seller_image_filename))
+        seller_image_url = f"/uploads/{seller_image_filename}"
+
+        # Upload metadata to Supabase
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
             "Content-Type": "application/json"
         }
-
         payload = {
-            "title": data['title'],
-            "description": data.get('description'),
-            "category": data.get('category'),
-            "price": data['price'],
-            "image_url": data.get('image_url'),
-            "seller_id": data['seller_id']
+            "title": title,
+            "description": description,
+            "category": category,
+            "price": price,
+            "image_url": image_url,
+            "seller_id": seller_id,
+            "seller_name": seller_name,
+            "seller_image_url": seller_image_url
         }
 
         res = requests.post(f"{SUPABASE_URL}/rest/v1/arts", headers=headers, json=payload)
         if res.status_code not in [200, 201]:
-            print("Supabase art upload error:", res.text)
-            return jsonify({"error": "Supabase art upload failed"}), 500
+            print("Supabase Error:", res.text)
+            return jsonify({"error": "Supabase upload failed"}), 500
 
-        return jsonify({"message": "Artwork added successfully"}), 201
+        return jsonify({"message": "Artwork uploaded successfully!"}), 201
 
     except Exception as e:
         print("Add art error:", e)
