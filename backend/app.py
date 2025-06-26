@@ -56,21 +56,45 @@ def uploaded_file(filename):
 # --- REGISTER ---
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role')
-
-    if not all([name, email, password, role]):
-        return jsonify({'error': 'All fields are required.'}), 400
-
-    if email not in verified_emails:
-        return jsonify({'error': 'Email not verified. Please verify OTP first.'}), 403
-
     try:
+        # Handle multipart/form-data (for seller image upload)
+        if request.content_type.startswith('multipart/form-data'):
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            role = request.form.get('role')
+            seller_image_file = request.files.get('sellerImage') if role == 'seller' else None
+        else:
+            data = request.get_json()
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            role = data.get('role')
+            seller_image_file = None
+
+        # Validate required fields
+        if not all([username, email, password, role]):
+            return jsonify({'error': 'All fields are required.'}), 400
+
+        # Check if email was OTP-verified
+        if email not in verified_emails:
+            return jsonify({'error': 'Email not verified. Please verify OTP first.'}), 403
+
+        # Handle seller image upload
+        profile_image_url = None
+        if role == 'seller' and seller_image_file:
+            if not allowed_file(seller_image_file.filename):
+                return jsonify({'error': 'Only .jpg and .png files allowed for seller image'}), 400
+
+            filename = secure_filename(seller_image_file.filename)
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            seller_image_file.save(path)
+            profile_image_url = f"http://localhost:5000/uploads/{filename}"
+
+        # Hash the password
         hashed_pw = generate_password_hash(password)
 
+        # Prepare request to Supabase
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
@@ -78,19 +102,22 @@ def register():
         }
 
         payload = {
-            "name": name,
+            "username": username,
             "email": email,
             "password": hashed_pw,
-            "role": role
+            "role": role,
+            "profile_image_url": profile_image_url
         }
 
+        # Send to Supabase
         res = requests.post(f"{SUPABASE_URL}/rest/v1/users", headers=headers, json=payload)
 
         if res.status_code not in [200, 201]:
             print("Supabase error:", res.text)
             return jsonify({'error': 'Failed to register user'}), 500
 
-        verified_emails.discard(email)  # ✅ Remove from verified list after success
+        # Clear from verified email set
+        verified_emails.discard(email)
         return jsonify({'message': 'User registered successfully'}), 201
 
     except Exception as e:
@@ -117,7 +144,7 @@ def login():
             sslmode='require'
         )
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, email, password, role FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT id, username, email, password, role FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -125,13 +152,13 @@ def login():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        user_id, name, email, hashed_pw, role = user
+        user_id, username, email, hashed_pw, role = user
         if not check_password_hash(hashed_pw, password):
             return jsonify({"error": "Invalid credentials"}), 401
 
         return jsonify({
             "id": str(user_id),
-            "name": name,
+            "name": username,
             "email": email,
             "role": role
         }), 200
@@ -145,59 +172,55 @@ def login():
 def add_art():
     try:
         seller_id = request.form.get('seller_id')
-        seller_name = request.form.get('username')
         title = request.form.get('title')
         description = request.form.get('description')
         category = request.form.get('category')
         price = request.form.get('price')
 
         image_file = request.files.get('image_file')
-        seller_image_file = request.files.get('seller_image_file')
 
-        # Validate required fields
-        if not all([seller_id, seller_name, title, price, image_file, seller_image_file]):
-            return jsonify({'error': 'All fields including image files are required'}), 400
+        # ✅ Validate required fields
+        if not all([seller_id, title, price, image_file]):
+            return jsonify({'error': 'All fields including image file are required'}), 400
 
-        if not allowed_file(image_file.filename) or not allowed_file(seller_image_file.filename):
+        # ✅ Validate file type
+        if not allowed_file(image_file.filename):
             return jsonify({'error': 'Only .jpg and .png files allowed'}), 400
 
-        # Save artwork image
+        # ✅ Save artwork image to local uploads folder
         image_filename = secure_filename(image_file.filename)
-        image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
-        image_url = f"/uploads/{image_filename}"
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+        image_file.save(image_path)
+        image_url = f"http://localhost:5000/uploads/{image_filename}"
 
-        # Save seller image
-        seller_image_filename = secure_filename(seller_image_file.filename)
-        seller_image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], seller_image_filename))
-        seller_image_url = f"/uploads/{seller_image_filename}"
-
-        # Upload metadata to Supabase
+        # ✅ Prepare Supabase payload
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
             "Content-Type": "application/json"
         }
+
         payload = {
             "title": title,
             "description": description,
             "category": category,
             "price": price,
             "image_url": image_url,
-            "seller_id": seller_id,
-            "seller_name": seller_name,
-            "seller_image_url": seller_image_url
+            "seller_id": seller_id
         }
 
+        # ✅ POST to Supabase
         res = requests.post(f"{SUPABASE_URL}/rest/v1/arts", headers=headers, json=payload)
         if res.status_code not in [200, 201]:
             print("Supabase Error:", res.text)
             return jsonify({"error": "Supabase upload failed"}), 500
 
-        return jsonify({"message": "Artwork uploaded successfully!"}), 201
+        return jsonify({"message": "✅ Artwork uploaded successfully!"}), 201
 
     except Exception as e:
         print("Add art error:", e)
         return jsonify({"error": "Failed to add artwork"}), 500
+
     
 
 # --- UPDATE ARTWORK ---
@@ -236,22 +259,33 @@ def update_art(art_id):
 @app.route('/arts', methods=['GET'])
 def get_arts():
     try:
+        category = request.args.get('category')  # from query string
+
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}"
         }
 
-        res = requests.get(f"{SUPABASE_URL}/rest/v1/arts?select=*", headers=headers)
+        # Match the category case-sensitively or use ilike for case-insensitive
+        if category:
+            url = f"{SUPABASE_URL}/rest/v1/arts?category=ilike.{category}&select=*"
+        else:
+            url = f"{SUPABASE_URL}/rest/v1/arts?select=*"
+
+        res = requests.get(url, headers=headers)
 
         if res.status_code != 200:
             print("Supabase error:", res.text)
             return jsonify({"error": "Supabase fetch failed"}), 500
 
-        return jsonify(res.json()), 200
+        return jsonify({"products": res.json()}), 200
 
     except Exception as e:
         print("Fetch arts error:", e)
         return jsonify({"error": "Failed to fetch artworks"}), 500
+
+
+
     
 
 @app.route('/send-otp', methods=['POST'])

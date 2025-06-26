@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 
 function SellerDashboard() {
   const [formData, setFormData] = useState({
-    username: '',
     title: '',
     description: '',
     category: '',
     price: '',
     imageFile: null,
-    sellerImageFile: null,
   });
 
   const [message, setMessage] = useState('');
-  const user = JSON.parse(localStorage.getItem('user')); // For seller_id
+  const user = JSON.parse(localStorage.getItem('user')); // Get seller_id from localStorage
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -34,13 +32,11 @@ function SellerDashboard() {
 
     const data = new FormData();
     data.append('seller_id', user.id);
-    data.append('username', formData.username);
     data.append('title', formData.title);
     data.append('description', formData.description);
     data.append('category', formData.category);
     data.append('price', formData.price);
     data.append('image_file', formData.imageFile);
-    data.append('seller_image_file', formData.sellerImageFile);
 
     try {
       const res = await fetch('http://localhost:5000/add-art', {
@@ -53,13 +49,11 @@ function SellerDashboard() {
       if (res.ok) {
         setMessage('✅ Artwork uploaded successfully!');
         setFormData({
-          username: '',
           title: '',
           description: '',
           category: '',
           price: '',
           imageFile: null,
-          sellerImageFile: null,
         });
       } else {
         setMessage(`❌ ${result.error || 'Upload failed'}`);
@@ -77,31 +71,6 @@ function SellerDashboard() {
       {message && <p className="text-center mb-4 text-sm text-red-600">{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block font-semibold text-[#440000]">Your Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded"
-            placeholder="Enter your display name"
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold text-[#440000]">Your Profile Image (JPG/PNG)</label>
-          <input
-            type="file"
-            name="sellerImageFile"
-            accept="image/*"
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
         <div>
           <label className="block font-semibold text-[#440000]">Artwork Title</label>
           <input

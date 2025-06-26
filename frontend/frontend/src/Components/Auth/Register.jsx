@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 
 function Register() {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
     role: 'buyer',
+    sellerImage: null,
   });
+
   const [otp, setOtp] = useState('');
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -15,8 +17,12 @@ function Register() {
   const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const validateEmailFormat = (email) =>
@@ -73,7 +79,7 @@ function Register() {
       return setError('Please verify your email with OTP.');
     }
 
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       return setError('All fields are required.');
     }
 
@@ -82,23 +88,33 @@ function Register() {
     }
 
     try {
+      const data = new FormData();
+      data.append('username', formData.username);
+      data.append('email', formData.email);
+      data.append('password', formData.password);
+      data.append('role', formData.role);
+      if (formData.role === 'seller' && formData.sellerImage) {
+        data.append('seller_image', formData.sellerImage);
+      }
+
       const response = await fetch('http://localhost:5000/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        }),
+        body: data,
       });
 
-      const data = await response.json();
+      const resData = await response.json();
       if (!response.ok) {
-        setError(data.error || 'Registration failed.');
+        setError(resData.error || 'Registration failed.');
       } else {
-        setSuccess(data.message);
-        setFormData({ name: '', email: '', password: '', confirmPassword: '', role: 'buyer' });
+        setSuccess(resData.message);
+        setFormData({
+          username: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'buyer',
+          sellerImage: null,
+        });
         setIsEmailVerified(false);
         setShowOtpInput(false);
         setOtp('');
@@ -123,18 +139,21 @@ function Register() {
 
         <div className="space-y-4">
           <input
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
+            name="username"
+            placeholder="Username"
+            value={formData.username}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6E1313]"
+            required
           />
+
           <input
             name="email"
             placeholder="Email Address"
             value={formData.email}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6E1313]"
+            required
           />
 
           <div className="flex gap-2">
@@ -173,7 +192,9 @@ function Register() {
             value={formData.password}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6E1313]"
+            required
           />
+
           <input
             name="confirmPassword"
             type="password"
@@ -181,6 +202,7 @@ function Register() {
             value={formData.confirmPassword}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6E1313]"
+            required
           />
 
           <select
@@ -192,6 +214,20 @@ function Register() {
             <option value="buyer">Buyer</option>
             <option value="seller">Seller</option>
           </select>
+
+          {formData.role === 'seller' && (
+            <div>
+              <label className="text-sm text-[#440000] font-medium block mb-1">Upload Seller Image (JPG/PNG)</label>
+              <input
+                type="file"
+                name="sellerImage"
+                accept="image/*"
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-lg"
+                required
+              />
+            </div>
+          )}
 
           <button
             type="submit"

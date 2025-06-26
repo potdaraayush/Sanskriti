@@ -6,15 +6,24 @@ import ProductCard from '../ProductCard/ProductCard.jsx';
 function CategoryPage() {
   const { categoryName } = useParams();
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/products/category/${categoryName}`);
+        const res = await fetch(`http://localhost:5000/arts?category=${categoryName}`);
         const data = await res.json();
-        setProducts(data.products || []);
+        if (res.ok) {
+          setProducts(data.products || []);
+        } else {
+          setError(data.error || 'Failed to load category.');
+        }
       } catch (error) {
-        console.error('Error fetching category data:', error);
+        console.error('Fetch error:', error);
+        setError('Something went wrong while fetching category.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -27,8 +36,14 @@ function CategoryPage() {
         {categoryName.replace(/-/g, ' ')} Collection
       </h2>
 
-      {products.length === 0 ? (
-        <p className="text-center text-gray-300 text-lg">No products found in this category.</p>
+      {loading ? (
+        <p className="text-center text-gray-300">Loading...</p>
+      ) : error ? (
+        <p className="text-center text-red-500">{error}</p>
+      ) : products.length === 0 ? (
+        <p className="text-center text-gray-300 text-lg">
+          No products found in this category.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
