@@ -1,8 +1,6 @@
-// src/components/Card/ProductCard.jsx
 import React from 'react';
 
 function ProductCard({ id, seller_id, title, image_url, description, price }) {
-<<<<<<< HEAD
   const handleAddToCart = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || user.role !== 'buyer') {
@@ -32,8 +30,6 @@ function ProductCard({ id, seller_id, title, image_url, description, price }) {
     }
   };
 
-=======
->>>>>>> 7314ef0a55eb1f6494e1fedebfd378381616cfdb
   return (
     <div className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow-md hover:scale-105 transition-transform hover:shadow-lg hover:ring-2 hover:ring-[#F4B3B3]">
       <img
@@ -48,7 +44,6 @@ function ProductCard({ id, seller_id, title, image_url, description, price }) {
       <div className="p-4">
         <h3 className="text-xl text-[#F4B3B3] font-semibold mb-1 truncate">{title}</h3>
         <p className="text-gray-300 text-sm mb-2 line-clamp-2">{description}</p>
-<<<<<<< HEAD
         <p className="text-lg text-green-300 font-semibold mb-3">₹{price}</p>
         <button
           onClick={handleAddToCart}
@@ -56,9 +51,6 @@ function ProductCard({ id, seller_id, title, image_url, description, price }) {
         >
           Add to Cart
         </button>
-=======
-        <p className="text-lg text-green-300 font-semibold">₹{price}</p>
->>>>>>> 7314ef0a55eb1f6494e1fedebfd378381616cfdb
       </div>
     </div>
   );
