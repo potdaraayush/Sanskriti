@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask import send_from_directory
 from flask_cors import CORS
+from flask import request, jsonify
+from detect_anomaly import detect_spam_listings
 import psycopg2
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,6 +12,7 @@ from flask_mail import Mail, Message
 import random
 from dotenv import load_dotenv
 import os
+
 
 
 
@@ -171,55 +174,81 @@ def login():
 @app.route('/add-art', methods=['POST'])
 def add_art():
     try:
+        # 📥 Extract form data
         seller_id = request.form.get('seller_id')
         title = request.form.get('title')
-        description = request.form.get('description')
-        category = request.form.get('category')
+        description = request.form.get('description', '')
+        category = request.form.get('category', '')
         price = request.form.get('price')
-
         image_file = request.files.get('image_file')
 
-        # ✅ Validate required fields
+        # ✅ Required fields validation
         if not all([seller_id, title, price, image_file]):
             return jsonify({'error': 'All fields including image file are required'}), 400
 
-        # ✅ Validate file type
         if not allowed_file(image_file.filename):
             return jsonify({'error': 'Only .jpg and .png files allowed'}), 400
 
-        # ✅ Save artwork image to local uploads folder
+        # 💾 Save the image locally
         image_filename = secure_filename(image_file.filename)
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
         image_file.save(image_path)
         image_url = f"http://localhost:5000/uploads/{image_filename}"
 
-        # ✅ Prepare Supabase payload
+        # 🔍 Pull recent seller uploads from Supabase for spam detection
         headers = {
             "apikey": SUPABASE_API_KEY,
-            "Authorization": f"Bearer {SUPABASE_API_KEY}",
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {SUPABASE_API_KEY}"
         }
 
+        supabase_resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/arts?select=title,description,price&seller_id=eq.{seller_id}&limit=5",
+            headers=headers
+        )
+
+        recent_artworks = supabase_resp.json() if supabase_resp.status_code == 200 else []
+
+        # 🧠 Add current artwork to check for anomaly
+        recent_artworks.append({
+            "title": title,
+            "description": description,
+            "price": float(price)
+        })
+
+        # 🧠 Detect anomalies
+        results = detect_spam_listings(recent_artworks)
+        if results and results[-1].get("is_anomaly") == -1:
+            return jsonify({
+                "error": "⚠️ Suspicious artwork detected.",
+                "reason": results[-1].get("reason", "Unusual pattern detected.")
+            }), 400
+
+        # ✅ Prepare payload for Supabase insertion
+        headers['Content-Type'] = 'application/json'
         payload = {
             "title": title,
             "description": description,
             "category": category,
-            "price": price,
+            "price": float(price),
             "image_url": image_url,
             "seller_id": seller_id
         }
 
-        # ✅ POST to Supabase
-        res = requests.post(f"{SUPABASE_URL}/rest/v1/arts", headers=headers, json=payload)
-        if res.status_code not in [200, 201]:
-            print("Supabase Error:", res.text)
-            return jsonify({"error": "Supabase upload failed"}), 500
+        post_resp = requests.post(
+            f"{SUPABASE_URL}/rest/v1/arts",
+            headers=headers,
+            json=payload
+        )
+
+        if post_resp.status_code not in [200, 201]:
+            print("Supabase Error:", post_resp.text)
+            return jsonify({"error": "❌ Supabase upload failed"}), 500
 
         return jsonify({"message": "✅ Artwork uploaded successfully!"}), 201
 
     except Exception as e:
         print("Add art error:", e)
-        return jsonify({"error": "Failed to add artwork"}), 500
+        return jsonify({"error": f"❌ Failed to upload artwork: {str(e)}"}), 500
 
     
 
@@ -259,30 +288,34 @@ def update_art(art_id):
 @app.route('/arts', methods=['GET'])
 def get_arts():
     try:
-        category = request.args.get('category')  # from query string
+        # 📥 Extract 'category' from query string
+        category = request.args.get('category', '').strip()
 
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}"
         }
 
-        # Match the category case-sensitively or use ilike for case-insensitive
+        # 📡 Build Supabase URL
         if category:
-            url = f"{SUPABASE_URL}/rest/v1/arts?category=ilike.{category}&select=*"
+            # Using ilike for case-insensitive matching
+            url = f"{SUPABASE_URL}/rest/v1/arts?select=*&category=ilike.*{category}*"
         else:
             url = f"{SUPABASE_URL}/rest/v1/arts?select=*"
 
+        # 🔁 Make request to Supabase
         res = requests.get(url, headers=headers)
 
         if res.status_code != 200:
             print("Supabase error:", res.text)
-            return jsonify({"error": "Supabase fetch failed"}), 500
+            return jsonify({"error": "❌ Supabase fetch failed"}), 500
 
         return jsonify({"products": res.json()}), 200
 
     except Exception as e:
         print("Fetch arts error:", e)
-        return jsonify({"error": "Failed to fetch artworks"}), 500
+        return jsonify({"error": f"❌ Failed to fetch artworks: {str(e)}"}), 500
+
 
 
 
@@ -436,6 +469,16 @@ def remove_from_cart(cart_id):
         return jsonify({"error": "Failed to remove item from cart"}), 500
 
     return jsonify({"message": "Item removed from cart"}), 200
+
+
+@app.route('/check-spam', methods=['POST'])
+def check_spam():
+    data = request.get_json()
+    if not isinstance(data, list):
+        return jsonify({'error': 'Expected a list of artworks'}), 400
+
+    suspicious = detect_spam_listings(data)
+    return jsonify({'suspicious': suspicious}), 200
 
 
 # --- MAIN ---

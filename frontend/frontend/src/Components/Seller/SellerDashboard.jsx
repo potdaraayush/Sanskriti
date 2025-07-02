@@ -1,3 +1,4 @@
+// src/components/SellerDashboard.jsx
 import React, { useState } from 'react';
 
 function SellerDashboard() {
@@ -10,7 +11,7 @@ function SellerDashboard() {
   });
 
   const [message, setMessage] = useState('');
-  const user = JSON.parse(localStorage.getItem('user')); // Get seller_id from localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -56,7 +57,10 @@ function SellerDashboard() {
           imageFile: null,
         });
       } else {
-        setMessage(`❌ ${result.error || 'Upload failed'}`);
+        const errorMsg = result.reason
+          ? `❌ ${result.error} Reason: ${result.reason}`
+          : `❌ ${result.error || 'Upload failed'}`;
+        setMessage(errorMsg);
       }
     } catch (err) {
       console.error('Upload error:', err);
