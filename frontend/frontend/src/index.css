@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 🎨 Variables */
 :root {
   --rich-black: #0F0000;
   --deep-maroon: #440000;
@@ -16,22 +15,17 @@
   --texture-url: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
 }
 
-/* 🌍 Base Styling */
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--rich-black);
-  background-image: var(--texture-url);
-  background-repeat: repeat;
-  background-size: auto;
   color: black;
 }
+
 
 h1, h2, h3, h4, h5 {
   font-family: 'Philosopher', 'Marcellus', serif;
   color: var(--rose-pink);
 }
 
-/* ✨ Button Effects */
 button {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   font-family: 'Inter', sans-serif;
@@ -42,7 +36,6 @@ button:hover {
   box-shadow: 0 0 25px rgba(244, 179, 179, 0.6);
 }
 
-/* 🧊 Card Styling */
 .card {
   background-color: var(--card-bg);
   border-radius: 1rem;
@@ -73,7 +66,6 @@ button:hover {
   z-index: 1;
 }
 
-/* 🔦 Glow and CTA enhancements */
 .parallax-section .content {
   position: relative;
   z-index: 2;
@@ -94,7 +86,7 @@ button:hover {
   box-shadow: 0 4px 25px rgba(244, 179, 179, 0.5);
 }
 
-/* ✨ Optional CTA Hover BG (non-parallax) */
+/* 🔁 Optional CTA Background Hover */
 .hover-section {
   position: relative;
   overflow: hidden;
@@ -145,10 +137,11 @@ button:hover {
   width: auto;
   height: 100vh;
   z-index: -10;
-  opacity: 0.08; /* Increased from 0.04 */
+  opacity: 0.08;
   pointer-events: none;
 }
 
+/* Hide scrollbar */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

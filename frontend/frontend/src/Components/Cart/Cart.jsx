@@ -11,7 +11,18 @@ function Cart() {
 
     fetch(`http://localhost:5000/cart/${user.id}`)
       .then(res => res.json())
-      .then(data => setCartItems(data))
+      .then(data => {
+        console.log('Cart API response:', data); // helpful for debugging
+
+        if (Array.isArray(data)) {
+          setCartItems(data);
+        } else if (Array.isArray(data.cart)) {
+          setCartItems(data.cart);
+        } else {
+          setCartItems([]);
+          setError('Unexpected response format from server');
+        }
+      })
       .catch(err => {
         console.error('Cart fetch error:', err);
         setError('Failed to load cart');
@@ -20,15 +31,20 @@ function Cart() {
   }, [user]);
 
   const handleRemove = async (cartId) => {
-    const res = await fetch(`http://localhost:5000/cart/remove/${cartId}`, {
-      method: 'DELETE',
-    });
+    try {
+      const res = await fetch(`http://localhost:5000/cart/remove/${cartId}`, {
+        method: 'DELETE',
+      });
 
-    const result = await res.json();
-    alert(result.message || result.error);
+      const result = await res.json();
+      alert(result.message || result.error);
 
-    if (res.ok) {
-      setCartItems(prev => prev.filter(item => item.id !== cartId));
+      if (res.ok) {
+        setCartItems(prev => prev.filter(item => item.id !== cartId));
+      }
+    } catch (err) {
+      console.error('Remove item error:', err);
+      alert('Failed to remove item from cart');
     }
   };
 

@@ -1,0 +1,19 @@
+.global-bg-video {
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  transition: all 0.8s ease-in-out;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  position: fixed;
+  width: 100%;
+}
+
+.shrink-video {
+  height: 120px !important;
+  object-fit: cover;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}

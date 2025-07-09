@@ -1,0 +1,26 @@
+.landing-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 0;
+  transition: all 1s ease-in-out;
+}
+
+.landing-video.shrink {
+  height: 80px;
+  top: 0;
+  position: absolute;
+}
+
+.navbar-banner-video {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}

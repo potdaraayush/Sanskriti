@@ -10,9 +10,9 @@ function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="text-white font-sans bg-[#0F0000]">
+    <div className="text-white font-sans w-full">
       {/* Hero Section */}
-      <section className="text-center py-28 px-6">
+      <section className="text-center py-28 px-6 bg-[#0F0000]/80 backdrop-blur-sm">
         <h1 className="text-5xl md:text-6xl font-serif mb-6 text-[#F4B3B3] drop-shadow-lg tracking-wide">
           Sanskriti
         </h1>
@@ -28,7 +28,7 @@ function Home() {
       </section>
 
       {/* Featured Artworks */}
-      <section className="py-24 px-6 bg-[#1A0000]">
+      <section className="py-24 px-6 bg-[#1A0000]/90 backdrop-blur-sm">
         <h2 className="text-4xl font-serif mb-10 text-center text-[#F4B3B3] tracking-wide">
           Featured Artworks
         </h2>
@@ -36,8 +36,7 @@ function Home() {
           {[art1, art2, art3].map((img, i) => (
             <div
               key={i}
-              className="w-[280px] h-[400px] bg-[#1A1A1A] rounded-xl overflow-hidden shadow-xl transition transform hover:scale-[1.02]"
-              style={{ cursor: 'default', pointerEvents: 'none' }}
+              className="w-[280px] h-[400px] bg-[#1A1A1A] rounded-xl overflow-hidden shadow-xl transition transform hover:scale-[1.02] pointer-events-none"
             >
               <img
                 src={img}
