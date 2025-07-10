@@ -376,20 +376,6 @@ def delete_art(art_id):
     except Exception as e:
         print("Delete art error:", e)
         return jsonify({"error": "Failed to delete artwork"}), 500
-<<<<<<< HEAD
-    
-# --- ADD TO CART ---
-@app.route('/cart/add', methods=['POST'])
-def add_to_cart():
-    data = request.get_json()
-    print("Incoming JSON:", data)
-
-    buyer_id = data.get("user_id")  # ✅ Match frontend
-    art_id = data.get("art_id")
-
-    if not all([buyer_id, art_id]):
-        return jsonify({"error": "user_id and art_id required"}), 400
-=======
 # --- ADD TO CART ---
 @app.route('/cart/add', methods=['POST'])
 def add_to_cart():
@@ -410,7 +396,6 @@ def add_to_cart():
 
     if not all([buyer_id, art_id]):
         return jsonify({"error": "buyer_id and art_id required"}), 400
->>>>>>> 7314ef0a55eb1f6494e1fedebfd378381616cfdb
 
     headers = {
         "apikey": SUPABASE_API_KEY,
@@ -419,20 +404,12 @@ def add_to_cart():
     }
 
     payload = {
-<<<<<<< HEAD
-        "buyer_id": buyer_id,  # In Supabase table, keep it as 'buyer_id'
-=======
         "buyer_id": buyer_id,
->>>>>>> 7314ef0a55eb1f6494e1fedebfd378381616cfdb
         "art_id": art_id
     }
 
     res = requests.post(f"{SUPABASE_URL}/rest/v1/cart", headers=headers, json=payload)
     if res.status_code not in [200, 201]:
-<<<<<<< HEAD
-        print("Supabase error:", res.text)
-=======
->>>>>>> 7314ef0a55eb1f6494e1fedebfd378381616cfdb
         return jsonify({"error": "Failed to add to cart"}), 500
 
     return jsonify({"message": "Item added to cart"}), 201

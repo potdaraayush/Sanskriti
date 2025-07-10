@@ -18,6 +18,7 @@ import Shop from './Components/Shop/Shop.jsx';
 import About from './Components/About/About.jsx';
 import Contact from './Components/Contact/Contact.jsx';
 import CategoryPage from './Components/CategoryPage/CategoryPage.jsx';
+import Checkout from './Components/Checkout/Checkout.jsx';
 
 import SellerDashboard from './Components/Seller/SellerDashboard.jsx';
 import EditArt from './Components/Seller/EditArt.jsx';
@@ -48,6 +49,7 @@ const router = createBrowserRouter(
           <Route path="contact" element={<Contact />} />
           <Route path="category/:categoryName" element={<CategoryPage />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
 
           {/* Seller Routes */}
           <Route path="dashboard" element={<SellerDashboard />} />

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -13,7 +14,12 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email || !formData.password) {
+      return setError('Both fields are required.');
+    }
+
     setError('');
+    setLoading(true);
 
     try {
       const res = await fetch('http://localhost:5000/login', {
@@ -24,19 +30,30 @@ function Login() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        const user = data.user || { role: 'buyer' };
-        localStorage.setItem('user', JSON.stringify(user));
-        if (user.role === 'seller') {
-          navigate('/app/dashboard');
-        } else {
-          navigate('/app/cart');
-        }
-      } else {
+      if (!res.ok) {
         setError(data.error || 'Login failed. Please try again.');
+        return;
       }
+
+      const user = data.user || data; // In case your backend returns just `user` or full object
+      if (!user.role) {
+        setError('Invalid user data. Missing role.');
+        return;
+      }
+
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Redirect based on role
+      if (user.role === 'seller') {
+        navigate('/app/dashboard');
+      } else {
+        navigate('/app/home'); // or /app/shop or /app/cart
+      }
+
     } catch (err) {
       setError('Server error. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,9 +92,12 @@ function Login() {
           />
           <button
             type="submit"
-            className="w-full py-2 bg-[#6E1313] text-white font-bold rounded-lg hover:bg-[#440000] transition"
+            disabled={loading}
+            className={`w-full py-2 bg-[#6E1313] text-white font-bold rounded-lg transition ${
+              loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#440000]'
+            }`}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </div>
       </form>

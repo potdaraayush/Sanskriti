@@ -59,7 +59,7 @@ function CartSummary() {
               ⬅ Back to Cart
             </button>
             <button
-              onClick={() => alert("Feature coming soon!")}
+              onClick={() => navigate('/app/checkout')}
               className="px-4 py-2 bg-[#6E1313] text-white font-semibold rounded hover:bg-[#440000]"
             >
               ✅ Proceed to Checkout
