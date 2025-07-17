@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Marcellus&family=Philosopher&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rich-black: #0F0000;
+  --deep-maroon: #440000;
+  --rose-pink: #F4B3B3;
+  --light-rose: #fcdede;
+  --dark-bg: #1A0000;
+  --text-muted: #ccc;
+  --card-bg: #1A1A1A;
+  --texture-url: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: black;
+}
+
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Philosopher', 'Marcellus', serif;
+  color: var(--rose-pink);
+}
+
+button {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(244, 179, 179, 0.6);
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 25px rgba(244, 179, 179, 0.3);
+}
+
+/* 🌄 Parallax Section */
+.parallax-section {
+  background-image: url('https://images.unsplash.com/photo-1603618952604-7b06b51dd017?auto=format&fit=crop&w=1200&q=80');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.parallax-overlay {
+  background-color: rgba(15, 0, 0, 0.7);
+  padding: 5rem 1.5rem;
+  text-align: center;
+  z-index: 1;
+}
+
+.parallax-section .content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.parallax-section .content:hover {
+  transform: scale(1.02);
+}
+
+.parallax-section .cta-button {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.parallax-section .cta-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 25px rgba(244, 179, 179, 0.5);
+}
+
+/* 🔁 Optional CTA Background Hover */
+.hover-section {
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  transition: background-color 0.4s ease;
+}
+
+.hover-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+  z-index: -1;
+}
+
+.hover-cta::before {
+  background-image: url('https://unsplash.com/photos/a-man-drawing-on-a-paper-AEYg7kxhSbk');
+}
+
+.hover-section:hover::before {
+  opacity: 0.25;
+  transform: scale(1.05);
+}
+
+.hover-section .content {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.hover-section:hover .content {
+  transform: scale(1.02);
+}
+
+.hover-section:hover .cta-button {
+  transform: scale(1.05);
+  box-shadow: 0 4px 25px rgba(244, 179, 179, 0.5);
+}
+
+.mandala-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: 100vh;
+  z-index: -10;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
